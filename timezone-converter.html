@@ -254,6 +254,15 @@
         );
       }
 
+      function dateValueInTimeZone(timestamp, timeZone) {
+        const parts = partsAt(timestamp, timeZone);
+        return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+      }
+
+      function updateDatePickerMinimum() {
+        datePicker.min = dateValueInTimeZone(Date.now(), timeZoneSelect.value);
+      }
+
       function localDateTimeToUtcCandidates(dateValue, timeValue, timeZone) {
         const dateMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dateValue);
         const timeMatch = /^(\d{2}):(\d{2})$/.exec(timeValue);
@@ -300,16 +309,54 @@
           .sort((a, b) => a - b);
       }
 
-      const supportedTimeZones = typeof Intl.supportedValuesOf === "function"
-        ? Intl.supportedValuesOf("timeZone")
-        : ["Etc/UTC", "Asia/Kolkata", "America/New_York", "Europe/London"];
-      if (!supportedTimeZones.includes("Asia/Kolkata")) {
-        supportedTimeZones.push("Asia/Kolkata");
+      const timeZoneGroups = {
+        "United States": [
+          ["New York / Eastern", "America/New_York"],
+          ["Chicago / Central", "America/Chicago"],
+          ["Denver / Mountain", "America/Denver"],
+          ["Los Angeles / Pacific", "America/Los_Angeles"],
+          ["Anchorage / Alaska", "America/Anchorage"],
+          ["Honolulu / Hawaii", "Pacific/Honolulu"],
+        ],
+        Canada: [
+          ["St. John's / Newfoundland", "America/St_Johns"],
+          ["Halifax / Atlantic", "America/Halifax"],
+          ["Toronto / Eastern", "America/Toronto"],
+          ["Winnipeg / Central", "America/Winnipeg"],
+          ["Edmonton / Mountain", "America/Edmonton"],
+          ["Vancouver / Pacific", "America/Vancouver"],
+        ],
+        Australia: [
+          ["Perth / Western", "Australia/Perth"],
+          ["Adelaide / Central", "Australia/Adelaide"],
+          ["Darwin / Central", "Australia/Darwin"],
+          ["Brisbane / Eastern", "Australia/Brisbane"],
+          ["Sydney / Eastern", "Australia/Sydney"],
+        ],
+        "United Kingdom": [
+          ["London", "Europe/London"],
+        ],
+      };
+
+      for (const [groupName, zones] of Object.entries(timeZoneGroups)) {
+        const group = document.createElement("optgroup");
+        group.label = groupName;
+        for (const [label, timeZone] of zones) {
+          group.append(new Option(label, timeZone));
+        }
+        timeZoneSelect.append(group);
       }
-      for (const timeZone of supportedTimeZones) {
-        timeZoneSelect.add(new Option(timeZone, timeZone));
-      }
-      timeZoneSelect.value = "Asia/Kolkata";
+
+      const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const availableTimeZones = Object.values(timeZoneGroups).flatMap((zones) =>
+        zones.map(([, timeZone]) => timeZone),
+      );
+      timeZoneSelect.value = availableTimeZones.includes(browserTimeZone)
+        ? browserTimeZone
+        : "America/New_York";
+
+      updateDatePickerMinimum();
+      timeZoneSelect.addEventListener("change", updateDatePickerMinimum);
 
       const zonedToday = partsAt(Date.now(), timeZoneSelect.value);
       const zonedTomorrowAt1530 = new Date(Date.UTC(
@@ -344,6 +391,7 @@
         if (!datePicker.value) {
           return;
         }
+        updateDatePickerMinimum();
         const [year, month, day] = datePicker.value.split("-");
         localDateInput.value = `${day}/${month}/${year}`;
       });
@@ -363,7 +411,13 @@
             throw new Error("This local time does not exist because of a daylight-saving clock change.");
           }
 
-          const utc = new Date(candidates[0]);
+          const now = Date.now();
+          const futureCandidates = candidates.filter((candidate) => candidate > now);
+          if (futureCandidates.length === 0) {
+            throw new Error("Choose a date and time in the future for the selected time zone.");
+          }
+
+          const utc = new Date(futureCandidates[0]);
           const minute = String(utc.getUTCMinutes());
           const hour = String(utc.getUTCHours());
           const day = String(utc.getUTCDate()).padStart(2, "0");
@@ -376,6 +430,9 @@
           note.textContent = candidates.length > 1
             ? "This local time happens twice due to a daylight-saving clock change. The cron uses the earlier UTC occurrence."
             : "Cron times use UTC. In regions that observe daylight saving, a fixed UTC cron may need updating when the offset changes.";
+          if (candidates.length > 1 && futureCandidates[0] !== candidates[0]) {
+            note.textContent = "This local time happens twice due to a daylight-saving clock change. The earlier occurrence has passed, so the cron uses the later UTC occurrence.";
+          }
           result.hidden = false;
         } catch (conversionError) {
           error.textContent = conversionError.message;
