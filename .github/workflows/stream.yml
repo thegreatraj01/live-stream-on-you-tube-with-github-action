@@ -2,8 +2,15 @@ name: Daily YouTube Stream
 
 on:
   schedule:
-    # Set your daily trigger time in UTC (e.g., 14:00 UTC)
-    - cron: '0 14 * * *'
+    # Daily schedule in UTC
+    # 00:00 UTC = 05:30 IST / 19:00 NY (previous day winter)
+    # 06:00 UTC = 11:30 IST / 01:00 NY
+    # 12:00 UTC = 17:30 IST / 07:00 NY
+    # 14:00 UTC = 19:30 IST / 09:00 NY
+    # 18:00 UTC = 23:30 IST / 13:00 NY
+    # 21:00 UTC = 02:30 IST next day / 16:00 NY
+    # Example: run every day at 14:00 UTC
+    - cron: '0 10 * * *'
   workflow_dispatch: # Allows manual trigger anytime from GitHub UI
 
 jobs:
