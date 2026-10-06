@@ -7,10 +7,10 @@ An automated, serverless solution to stream pre-recorded videos live to YouTube 
 ## 📌 Features
 
 - **0% Local CPU/Bandwidth Usage:** Streaming happens on GitHub's cloud runners.
-- **No Binary Uploads Required:** FFmpeg is automatically installed on runtime by the cloud environment.
+- **Git LFS Video Storage:** Large video files are stored with Git LFS; FFmpeg is installed by the cloud workflow.
 - **Pass-Through Streaming (`-c copy`):** Streams fast and efficiently without quality loss or heavy re-encoding delay.
 - **Flexible Scheduling:** Run streams automatically every day at a specific time or trigger them manually on demand.
-- **Zero Cost Setup:** Completely free using GitHub Actions.
+- **GitHub Actions Streaming:** Runs in the cloud; Git LFS storage and bandwidth limits depend on your GitHub plan.
 
 ---
 
@@ -42,6 +42,12 @@ youtube-live-streamer/
 3. Under the **Stream Settings** tab, locate **Stream Key (Paste in encoder)**.
 4. Click **Copy**.
 
+### Large video files / compatibility tips
+
+- If your `video.mp4` is very large or uses a codec/format that YouTube doesn't accept for direct pass-through, the stream can fail.
+- The script first tries a fast `-c copy` stream, then automatically retries with a YouTube-compatible `H.264` + `AAC` transcode.
+- For best results, use a single MP4 file encoded as `H.264` video and `AAC` audio, ideally at 1080p/30fps or 60fps.
+
 ### 2. Add the Stream Key to GitHub Secrets
 
 1. Open your repository on GitHub.
@@ -55,17 +61,33 @@ youtube-live-streamer/
 
 ## 🎬 Step 2: How to Change Your Video Daily
 
+The video is stored with Git LFS because it is larger than GitHub's 100 MB regular Git file limit. Git LFS has separate storage and bandwidth quotas, so check your GitHub plan before uploading or streaming large files frequently.
+
 To update the video that will go live on your next scheduled stream:
 
-1. Delete or overwrite the existing `video.mp4` in the root folder of your repository.
-2. Upload your new video file and ensure it is named exactly `video.mp4`.
-3. Commit and push your changes to GitHub:
+1. Install Git LFS from [git-lfs.com](https://git-lfs.com/) if it is not already installed, then run `git lfs install` once.
+2. Replace `video.mp4` in the repository root.
+3. Commit and push the updated video:
    ```bash
+   git lfs track "video.mp4"
    git add video.mp4
+   git add .gitattributes
    git commit -m "Update video for today's stream"
    git push origin main
    ```
-   _The next time the GitHub Action runs, it will stream the newly uploaded `video.mp4`._
+   The workflow checks out Git LFS files so the runner receives the real video, not just the LFS pointer.
+
+### Fixing the current rejected push
+
+The existing commit contains `video.mp4` as a regular Git blob, so adding LFS tracking alone will not fix its push. After committing the LFS configuration and any pending changes, rewrite the local history to convert the video:
+
+```bash
+git lfs install
+git lfs migrate import --include="video.mp4" --include-ref=refs/heads/main
+git push -u origin main
+```
+
+This rewrites local commit IDs. The push command above is suitable when the GitHub repository has no commits yet. If the remote already has commits, coordinate before pushing rewritten history.
 
 ---
 
