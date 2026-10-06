@@ -95,7 +95,7 @@ This rewrites local commit IDs. The push command above is suitable when the GitH
 
 The stream timing is managed using a **Cron Schedule** inside `.github/workflows/stream.yml`.
 
-Use [`timezone-converter.html`](./timezone-converter.html) to convert a local date and time to UTC and generate a GitHub Actions cron expression. The current workflow runs daily at **16:15 UTC / 21:45 IST**.
+Use [`timezone-converter.html`](./timezone-converter.html) to convert a local date and time to UTC and generate a GitHub Actions cron expression. The current workflow runs daily at **16:35 UTC / 22:05 IST**.
 
 GitHub Actions scheduled workflows use UTC and are not guaranteed to start at the exact minute: GitHub may delay them (sometimes by up to an hour), and under heavy load a scheduled event can be dropped. The workflow must also be present on the repository's default branch. Check the **Actions** tab for a run whose event is `schedule`; manual runs appear as `workflow_dispatch`. The workflow logs the trigger type and runner's UTC time to help distinguish them.
 
@@ -106,7 +106,7 @@ Open `.github/workflows/stream.yml` and modify the `cron` line:
 ```yaml
 on:
   schedule:
-    - cron: "15 16 * * *" # Runs daily at 16:15 UTC / 21:45 IST
+    - cron: "35 16 * * *" # Runs daily at 16:35 UTC / 22:05 IST
 ```
 
 ### Understanding Cron syntax in UTC:
@@ -118,7 +118,7 @@ on:
 | :----------------- | :------------------- | :--------------------- |
 | **2:00 PM UTC**    | 14:00 UTC            | `- cron: '0 14 * * *'` |
 | **8:00 PM EST**    | 01:00 UTC (Next Day) | `- cron: '0 1 * * *'`  |
-| **9:45 PM IST**    | 16:15 UTC            | `- cron: '15 16 * * *'` |
+| **10:05 PM IST**   | 16:35 UTC            | `- cron: '35 16 * * *'` |
 
 _Tip: You can use [crontab.guru](https://crontab.guru/) to calculate cron timings easily._
 
