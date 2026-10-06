@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>Time Zone to GitHub Actions Cron</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #101827;
+        color: #e5eaf2;
+      }
+
+      body {
+        box-sizing: border-box;
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+
+      h1 {
+        margin-bottom: 8px;
+      }
+
+      p {
+        color: #b8c3d4;
+        line-height: 1.5;
+      }
+
+      form,
+      .result {
+        display: grid;
+        gap: 16px;
+        padding: 20px;
+        border: 1px solid #34445d;
+        border-radius: 12px;
+        background: #182438;
+      }
+
+      .datetime-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 12px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        font-weight: 600;
+      }
+
+      .date-control {
+        display: flex;
+        gap: 8px;
+      }
+
+      .date-control input[type="text"] {
+        min-width: 0;
+        flex: 1;
+      }
+
+      @media (max-width: 520px) {
+        .datetime-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      input,
+      select,
+      button {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 12px;
+        border: 1px solid #526783;
+        border-radius: 8px;
+        font: inherit;
+      }
+
+      input,
+      select {
+        background: #101827;
+        color: inherit;
+      }
+
+      button {
+        border: 0;
+        background: #79a9ff;
+        color: #101827;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      button:hover {
+        background: #9bbdff;
+      }
+
+      .calendar-button {
+        display: grid;
+        width: 48px;
+        min-width: 48px;
+        place-items: center;
+        padding: 8px;
+      }
+
+      .calendar-button svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.8;
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        clip-path: inset(50%);
+      }
+
+      .result {
+        margin-top: 20px;
+      }
+
+      output {
+        overflow-wrap: anywhere;
+        color: #a9c8ff;
+        font: 600 1.1rem ui-monospace, monospace;
+      }
+
+      .yaml-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .yaml-line output {
+        flex: 1;
+      }
+
+      .copy-button {
+        width: auto;
+        min-width: 82px;
+        min-height: 40px;
+        padding: 8px 12px;
+        background: #34445d;
+        color: #e5eaf2;
+      }
+
+      .error {
+        color: #ffaaaa;
+      }
+
+      .note {
+        font-size: 0.92rem;
+      }
+
+      [hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Time zone to GitHub Actions cron</h1>
+      <p>Convert a local date and time to the UTC cron expression GitHub Actions expects.</p>
+
+      <form id="converter">
+        <div class="datetime-row">
+          <label for="local-date">Date (DD/MM/YYYY)
+            <span class="date-control">
+              <input id="local-date" name="local-date" type="text" inputmode="numeric"
+                placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}" maxlength="10" required>
+              <button id="open-calendar" class="calendar-button" type="button" aria-label="Select date from calendar">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+                  <path d="M16 3v4M8 3v4M3 10h18"></path>
+                </svg>
+              </button>
+              <input id="date-picker" class="visually-hidden" type="date" tabindex="-1" aria-label="Choose a date">
+            </span>
+          </label>
+          <label for="local-clock">Time
+            <input id="local-clock" name="local-clock" type="time" required>
+          </label>
+        </div>
+        <div class="datetime-row">
+          <label for="time-zone">Time zone
+            <select id="time-zone" name="time-zone" required></select>
+          </label>
+        </div>
+
+        <button type="submit">Convert to UTC</button>
+      </form>
+
+      <section class="result" aria-live="polite" hidden>
+        <strong>Corresponding UTC time</strong>
+        <output id="utc-time"></output>
+        <strong>Paste this line into your workflow .yml file</strong>
+        <div class="yaml-line">
+          <output id="yaml-cron"></output>
+          <button id="copy-cron" class="copy-button" type="button">Copy</button>
+        </div>
+        <p id="copy-status" class="note" role="status" aria-live="polite"></p>
+        <p id="note" class="note"></p>
+      </section>
+      <p id="error" class="error" role="alert" hidden></p>
+    </main>
+
+    <script>
+      const form = document.querySelector("#converter");
+      const localDateInput = document.querySelector("#local-date");
+      const localClockInput = document.querySelector("#local-clock");
+      const datePicker = document.querySelector("#date-picker");
+      const openCalendarButton = document.querySelector("#open-calendar");
+      const timeZoneSelect = document.querySelector("#time-zone");
+      const result = document.querySelector(".result");
+      const utcOutput = document.querySelector("#utc-time");
+      const yamlCronOutput = document.querySelector("#yaml-cron");
+      const copyButton = document.querySelector("#copy-cron");
+      const copyStatus = document.querySelector("#copy-status");
+      const note = document.querySelector("#note");
+      const error = document.querySelector("#error");
+      const formatterCache = new Map();
+
+      function formatterFor(timeZone) {
+        if (!formatterCache.has(timeZone)) {
+          formatterCache.set(timeZone, new Intl.DateTimeFormat("en-GB", {
+            timeZone,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+          }));
+        }
+        return formatterCache.get(timeZone);
+      }
+
+      function partsAt(timestamp, timeZone) {
+        return Object.fromEntries(
+          formatterFor(timeZone)
+            .formatToParts(new Date(timestamp))
+            .filter(({ type }) => type !== "literal")
+            .map(({ type, value }) => [type, Number(value)]),
+        );
+      }
+
+      function localDateTimeToUtcCandidates(dateValue, timeValue, timeZone) {
+        const dateMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dateValue);
+        const timeMatch = /^(\d{2}):(\d{2})$/.exec(timeValue);
+        if (!dateMatch || !timeMatch) {
+          throw new Error("Enter a date as DD/MM/YYYY and choose a valid time.");
+        }
+
+        const [, day, month, year] = dateMatch.map(Number);
+        const [, hour, minute] = timeMatch.map(Number);
+        const dateCheck = new Date(Date.UTC(year, month - 1, day));
+        if (
+          dateCheck.getUTCFullYear() !== year
+          || dateCheck.getUTCMonth() !== month - 1
+          || dateCheck.getUTCDate() !== day
+          || hour > 23
+          || minute > 59
+        ) {
+          throw new Error("Enter a real calendar date and a valid time.");
+        }
+
+        const localAsUtc = Date.UTC(year, month - 1, day, hour, minute);
+        const offsets = new Set();
+
+        for (let delta = -18; delta <= 18; delta += 0.5) {
+          const sample = localAsUtc + delta * 60 * 60 * 1000;
+          const parts = partsAt(sample, timeZone);
+          const displayedAsUtc = Date.UTC(
+            parts.year,
+            parts.month - 1,
+            parts.day,
+            parts.hour,
+            parts.minute,
+          );
+          offsets.add(displayedAsUtc - sample);
+        }
+
+        const expected = { year, month, day, hour, minute };
+        return [...offsets]
+          .map((offset) => localAsUtc - offset)
+          .filter((candidate) => {
+            const actual = partsAt(candidate, timeZone);
+            return Object.keys(expected).every((key) => actual[key] === expected[key]);
+          })
+          .sort((a, b) => a - b);
+      }
+
+      const supportedTimeZones = typeof Intl.supportedValuesOf === "function"
+        ? Intl.supportedValuesOf("timeZone")
+        : ["Etc/UTC", "Asia/Kolkata", "America/New_York", "Europe/London"];
+      if (!supportedTimeZones.includes("Asia/Kolkata")) {
+        supportedTimeZones.push("Asia/Kolkata");
+      }
+      for (const timeZone of supportedTimeZones) {
+        timeZoneSelect.add(new Option(timeZone, timeZone));
+      }
+      timeZoneSelect.value = "Asia/Kolkata";
+
+      const zonedToday = partsAt(Date.now(), timeZoneSelect.value);
+      const zonedTomorrowAt1530 = new Date(Date.UTC(
+        zonedToday.year,
+        zonedToday.month - 1,
+        zonedToday.day + 1,
+        15,
+        30,
+      ));
+      localDateInput.value = [
+        String(zonedTomorrowAt1530.getUTCDate()).padStart(2, "0"),
+        String(zonedTomorrowAt1530.getUTCMonth() + 1).padStart(2, "0"),
+        zonedTomorrowAt1530.getUTCFullYear(),
+      ].join("/");
+      datePicker.value = zonedTomorrowAt1530.toISOString().slice(0, 10);
+      localClockInput.value = "15:30";
+
+      openCalendarButton.addEventListener("click", () => {
+        const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(localDateInput.value);
+        if (match) {
+          const [, day, month, year] = match;
+          datePicker.value = `${year}-${month}-${day}`;
+        }
+        if (typeof datePicker.showPicker === "function") {
+          datePicker.showPicker();
+        } else {
+          datePicker.click();
+        }
+      });
+
+      datePicker.addEventListener("change", () => {
+        if (!datePicker.value) {
+          return;
+        }
+        const [year, month, day] = datePicker.value.split("-");
+        localDateInput.value = `${day}/${month}/${year}`;
+      });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        error.hidden = true;
+        result.hidden = true;
+
+        try {
+          const candidates = localDateTimeToUtcCandidates(
+            localDateInput.value,
+            localClockInput.value,
+            timeZoneSelect.value,
+          );
+          if (candidates.length === 0) {
+            throw new Error("This local time does not exist because of a daylight-saving clock change.");
+          }
+
+          const utc = new Date(candidates[0]);
+          const minute = String(utc.getUTCMinutes());
+          const hour = String(utc.getUTCHours());
+          const day = String(utc.getUTCDate()).padStart(2, "0");
+          const month = String(utc.getUTCMonth() + 1).padStart(2, "0");
+          const year = utc.getUTCFullYear();
+
+          utcOutput.value = `${year}-${month}-${day} ${hour.padStart(2, "0")}:${minute.padStart(2, "0")} UTC`;
+          yamlCronOutput.value = `- cron: '${minute} ${hour} * * *'`;
+          copyStatus.textContent = "";
+          note.textContent = candidates.length > 1
+            ? "This local time happens twice due to a daylight-saving clock change. The cron uses the earlier UTC occurrence."
+            : "Cron times use UTC. In regions that observe daylight saving, a fixed UTC cron may need updating when the offset changes.";
+          result.hidden = false;
+        } catch (conversionError) {
+          error.textContent = conversionError.message;
+          error.hidden = false;
+        }
+      });
+
+      copyButton.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(yamlCronOutput.value);
+          copyStatus.textContent = "YAML cron line copied.";
+        } catch (copyError) {
+          copyStatus.textContent = "Copy was blocked by the browser. Select and copy the YAML line above.";
+          console.error("Could not copy the YAML cron line:", copyError);
+        }
+      });
+    </script>
+  </body>
+</html>
