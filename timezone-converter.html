@@ -310,6 +310,9 @@
       }
 
       const timeZoneGroups = {
+        India: [
+          ["India Standard Time (IST)", "Asia/Kolkata"],
+        ],
         "United States": [
           ["New York / Eastern", "America/New_York"],
           ["Chicago / Central", "America/Chicago"],
@@ -353,7 +356,7 @@
       );
       timeZoneSelect.value = availableTimeZones.includes(browserTimeZone)
         ? browserTimeZone
-        : "America/New_York";
+        : "Asia/Kolkata";
 
       updateDatePickerMinimum();
       timeZoneSelect.addEventListener("change", updateDatePickerMinimum);

@@ -3,7 +3,7 @@ name: Daily YouTube Stream
 on:
   schedule:
     # GitHub Actions schedules use UTC. 16:15 UTC is 21:45 India time (IST).
-    - cron: "21 16 * * *"
+    - cron: "35 16 * * *"
   workflow_dispatch: # Allows manual trigger anytime from GitHub UI
 
 jobs:
