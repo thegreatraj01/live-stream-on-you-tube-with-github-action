@@ -1,14 +1,29 @@
-name: Daily YouTube Stream
+name: Scheduled YouTube Live Stream
 
 on:
-  schedule:
-    # GitHub Actions schedules use UTC.
-    - cron: "10 17 * * *"
-  workflow_dispatch: # Allows manual trigger anytime from GitHub UI
+  repository_dispatch:
+    types:
+      - noon-ist
+      - noon-new-york
+  workflow_dispatch:
+    inputs:
+      video_file:
+        description: Video file to stream
+        required: true
+        type: choice
+        options:
+          - video.mp4
+          - video2.mp4
+        default: video.mp4
+
+permissions:
+  contents: read
 
 jobs:
   stream:
     runs-on: ubuntu-latest
+    env:
+      VIDEO_FILE: ${{ github.event.action == 'noon-new-york' && 'video2.mp4' || github.event.inputs.video_file || 'video.mp4' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -29,7 +44,7 @@ jobs:
         run: |
           echo "Trigger event: $GITHUB_EVENT_NAME"
           echo "Runner time (UTC): $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          echo "Configured schedule: 16:35 UTC (22:05 IST)"
+          echo "Video file: $VIDEO_FILE"
 
       - name: Start Live Stream
         env:

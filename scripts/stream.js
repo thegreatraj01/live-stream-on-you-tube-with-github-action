@@ -10,10 +10,18 @@ if (!YOUTUBE_STREAM_KEY) {
   process.exit(1);
 }
 
-const videoPath = path.join(__dirname, "..", "video.mp4");
+const videoFile = process.env.VIDEO_FILE?.trim() || "video.mp4";
+if (!["video.mp4", "video2.mp4"].includes(videoFile)) {
+  console.error(
+    `Error: Unsupported video file "${videoFile}". Use video.mp4 or video2.mp4.`,
+  );
+  process.exit(1);
+}
+
+const videoPath = path.join(__dirname, "..", videoFile);
 if (!fs.existsSync(videoPath)) {
   console.error(
-    `Error: Video file not found at ${videoPath}. Add a valid video.mp4 in the repository root.`,
+    `Error: Video file not found at ${videoPath}. Add ${videoFile} in the repository root.`,
   );
   process.exit(1);
 }
