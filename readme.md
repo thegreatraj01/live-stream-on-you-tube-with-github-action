@@ -135,12 +135,46 @@ GitHub Actions scheduled workflows may start late, so these streams are triggere
     X-GitHub-Api-Version: 2022-11-28
     Content-Type: application/json
     ```
-  - **Authorization header value:** enter `Bearer ` followed by your GitHub token. Keep the space after `Bearer` and do not add quotes around the token.
+  - **Authorization header:** enter the word `Bearer`, one space, then your GitHub token. Do not include quotes or angle brackets.
 - Choose raw JSON (or equivalent) for the request body/payload and enter:
     ```json
     {"event_type":"noon-ist"}
     ```
 - Save and enable the job.
+
+#### Import from cURL, wget, or crontab
+
+In cron-job.org, choose **Import from cURL** and paste either the cURL command or full crontab line below. The importer can populate the request and schedule fields. Replace `YOUR_GITHUB_TOKEN` with your token before importing; never save or share a command containing the real token.
+
+```bash
+curl --request POST \
+  --url 'https://api.github.com/repos/thegreatraj01/live-stream-on-you-tube-with-github-action/dispatches' \
+  --header 'Accept: application/vnd.github+json' \
+  --header 'Authorization: Bearer YOUR_GITHUB_TOKEN' \
+  --header 'X-GitHub-Api-Version: 2022-11-28' \
+  --header 'Content-Type: application/json' \
+  --data '{"event_type":"noon-ist"}'
+```
+
+Alternatively, import this complete crontab line to populate the daily noon schedule as well as the request:
+
+```cron
+0 12 * * * curl --request POST --url 'https://api.github.com/repos/thegreatraj01/live-stream-on-you-tube-with-github-action/dispatches' --header 'Accept: application/vnd.github+json' --header 'Authorization: Bearer YOUR_GITHUB_TOKEN' --header 'X-GitHub-Api-Version: 2022-11-28' --header 'Content-Type: application/json' --data '{"event_type":"noon-ist"}'
+```
+
+If you prefer `wget`, the equivalent request is:
+
+```bash
+wget --method=POST \
+  --header='Accept: application/vnd.github+json' \
+  --header='Authorization: Bearer YOUR_GITHUB_TOKEN' \
+  --header='X-GitHub-Api-Version: 2022-11-28' \
+  --header='Content-Type: application/json' \
+  --body-data='{"event_type":"noon-ist"}' \
+  -O- 'https://api.github.com/repos/thegreatraj01/live-stream-on-you-tube-with-github-action/dispatches'
+```
+
+After importing, verify the URL, method, headers, body, and daily **12:00 PM** schedule. Set the timezone to **Asia/Kolkata** in cron-job.org; the crontab expression specifies the time but does not reliably carry a timezone setting through import.
 
 ### 3. Create the daily noon New York job
 
@@ -151,6 +185,7 @@ GitHub Actions scheduled workflows may start late, so these streams are triggere
   ```json
   {"event_type":"noon-new-york"}
   ```
+- To import this job, use the same cURL command or crontab line above, but change the request body to `{"event_type":"noon-new-york"}`. After importing, set the schedule to **12:00 PM** and timezone to **America/New_York**.
 - The `noon-ist` event streams `video.mp4`; the `noon-new-york` event streams `video2.mp4`.
 - Since each job uses its local timezone, both stay at noon year-round even though New York's equivalent UTC time changes with daylight saving time.
 
