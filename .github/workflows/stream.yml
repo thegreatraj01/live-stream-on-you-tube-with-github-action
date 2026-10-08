@@ -27,8 +27,16 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
-        with:
-          lfs: true
+
+      - name: Download video from GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p release-assets
+          gh release download daily-stream \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "$VIDEO_FILE" \
+            --dir release-assets
 
       - name: Install FFmpeg
         run: |

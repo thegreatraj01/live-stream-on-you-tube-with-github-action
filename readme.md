@@ -7,10 +7,10 @@ An automated, serverless solution to stream pre-recorded videos live to YouTube 
 ## 📌 Features
 
 - **0% Local CPU/Bandwidth Usage:** Streaming happens on GitHub's cloud runners.
-- **Git LFS Video Storage:** Large video files are stored with Git LFS; FFmpeg is installed by the cloud workflow.
+- **GitHub Release Video Storage:** Stream videos are uploaded directly as release assets instead of being committed to the repository or stored with Git LFS.
 - **Pass-Through Streaming (`-c copy`):** Streams fast and efficiently without quality loss or heavy re-encoding delay.
 - **Flexible Scheduling:** Run streams automatically every day at a specific time or trigger them manually on demand.
-- **GitHub Actions Streaming:** Runs in the cloud; Git LFS storage and bandwidth limits depend on your GitHub plan.
+- **GitHub Actions Streaming:** Runs in the cloud and downloads the selected video from the `daily-stream` release when the job starts.
 
 ---
 
@@ -25,8 +25,6 @@ youtube-live-streamer/
 │       └── stream.yml     # GitHub Actions workflow configuration
 ├── scripts/
 │   └── stream.js          # Node.js script executing FFmpeg
-├── video.mp4              # Video streamed at 12:00 PM IST
-├── video2.mp4             # Video streamed at 12:00 PM New York time
 └── README.md              # Documentation
 ```
 
@@ -62,35 +60,40 @@ youtube-live-streamer/
 
 ## 🎬 Step 2: Add or Change the Stream Videos
 
-The videos are stored with Git LFS because they may be larger than GitHub's 100 MB regular Git file limit. Git LFS has separate storage and bandwidth quotas, so check your GitHub plan before uploading or streaming large files frequently. The noon IST job streams `video.mp4`; the noon New York job streams `video2.mp4`.
+Upload the videos directly to the GitHub Release from your computer. They must be named `video.mp4` and `video2.mp4`: the noon IST job streams `video.mp4`, and the noon New York job streams `video2.mp4`. The workflow downloads only the selected asset into its temporary runner workspace; it does not fetch repository LFS media.
 
-To add or update either video:
+### Upload using the GitHub website
 
-1. Install Git LFS from [git-lfs.com](https://git-lfs.com/) if it is not already installed, then run `git lfs install` once.
-2. Put the videos named `video.mp4` and `video2.mp4` in the repository root. To track both with Git LFS, run:
-   ```bash
-   git lfs track "video.mp4" "video2.mp4"
-   ```
-3. Commit and push the updated video:
-   ```bash
-   git add video.mp4 video2.mp4
-   git add .gitattributes
-   git commit -m "Update stream videos"
-   git push origin main
-   ```
-   The workflow checks out Git LFS files so the runner receives the real video, not just the LFS pointer.
+1. Open the repository on GitHub and select **Releases** → **Draft a new release**.
+2. Create or select the tag `daily-stream` and set the title to **Daily Streaming Video**.
+3. Drag `video.mp4` and `video2.mp4` from your computer into the release's attachment area, then publish the release.
+4. To replace a video later, edit the `daily-stream` release, remove the old asset with that name, attach the updated file, and save the release.
 
-### Fixing the current rejected push
+### Upload using GitHub CLI (Windows)
 
-The existing commit contains `video.mp4` as a regular Git blob, so adding LFS tracking alone will not fix its push. After committing the LFS configuration and any pending changes, rewrite the local history to convert the video:
+Install and authenticate the [GitHub CLI](https://cli.github.com/) on your computer with `gh auth login`. For the first upload, create the release and attach both local files:
 
-```bash
-git lfs install
-git lfs migrate import --include="video.mp4" --include-ref=refs/heads/main
-git push -u origin main
+```powershell
+gh release create daily-stream "C:\path\to\video.mp4" "C:\path\to\video2.mp4" --title "Daily Streaming Video" --notes "Videos used by the daily stream workflow."
 ```
 
-This rewrites local commit IDs. The push command above is suitable when the GitHub repository has no commits yet. If the remote already has commits, coordinate before pushing rewritten history.
+For later uploads, replace assets with matching names:
+
+```powershell
+gh release upload daily-stream "C:\path\to\video.mp4" "C:\path\to\video2.mp4" --clobber
+```
+
+`--clobber` deletes an existing asset before uploading its replacement, so keep your local copies and verify the upload succeeds.
+
+Release assets are separate from Git commits and do not increase the repository's Git history size. GitHub allows up to 1,000 assets per release, with each file under 2 GiB; there is no total release-size or bandwidth limit. Do not commit the video files or upload them through Git LFS if you want to keep them out of the repository and LFS storage.
+
+If these videos were already tracked in your repository, upload and verify both release assets before committing or pushing the workflow changes. The migration removes the video paths from the current Git tree but keeps your local copies on disk; `.gitignore` prevents accidentally adding them again. If doing this migration manually, untrack them without deleting the local files:
+
+```powershell
+git rm --cached video.mp4 video2.mp4
+```
+
+Commit that removal along with the workflow changes. Removing files in a new commit does not erase older versions from Git history or immediately remove previously stored LFS objects; history cleanup is a separate operation.
 
 ---
 
@@ -107,7 +110,7 @@ GitHub Actions scheduled workflows may start late, so these streams are triggere
 - Before configuring cron-job.org:
   - Push this workflow to the repository's **default branch**.
   - Confirm GitHub Actions is enabled.
-  - Ensure `video.mp4` and `video2.mp4` (including their Git LFS data, if used) are committed.
+  - Ensure the `daily-stream` release exists and contains `video.mp4` and `video2.mp4`.
 - On GitHub, open **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens**, then create a token with:
   - A descriptive name, such as `cron-job.org YouTube streams`.
   - The repository owner as the resource owner.
@@ -186,7 +189,7 @@ After importing, verify the URL, method, headers, body, and daily **12:00 PM** s
   {"event_type":"noon-new-york"}
   ```
 - To import this job, use the same cURL command or crontab line above, but change the request body to `{"event_type":"noon-new-york"}`. After importing, set the schedule to **12:00 PM** and timezone to **America/New_York**.
-- The `noon-ist` event streams `video.mp4`; the `noon-new-york` event streams `video2.mp4`.
+- The `noon-ist` event streams `video.mp4`; the `noon-new-york` event streams `video2.mp4`, both downloaded from the `daily-stream` release.
 - Since each job uses its local timezone, both stay at noon year-round even though New York's equivalent UTC time changes with daylight saving time.
 
 ### 4. Confirm the jobs

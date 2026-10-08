@@ -18,10 +18,10 @@ if (!["video.mp4", "video2.mp4"].includes(videoFile)) {
   process.exit(1);
 }
 
-const videoPath = path.join(__dirname, "..", videoFile);
+const videoPath = path.join(__dirname, "..", "release-assets", videoFile);
 if (!fs.existsSync(videoPath)) {
   console.error(
-    `Error: Video file not found at ${videoPath}. Add ${videoFile} in the repository root.`,
+    `Error: Release video asset not found at ${videoPath}. Add ${videoFile} to the daily-stream GitHub Release.`,
   );
   process.exit(1);
 }
