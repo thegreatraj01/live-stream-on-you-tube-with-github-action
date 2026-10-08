@@ -45,8 +45,8 @@ youtube-live-streamer/
 
 ### Large video files / compatibility tips
 
-- If your `video.mp4` is very large or uses a codec/format that YouTube doesn't accept for direct pass-through, the stream can fail.
-- The script first tries a fast `-c copy` stream, then automatically retries with a YouTube-compatible `H.264` + `AAC` transcode.
+- Videos are transcoded before streaming, so FFmpeg does not depend on the source video's codec or keyframe interval.
+- The script transcodes videos to `H.264` + `AAC`, targeting a constant 6,800 Kbps video bitrate with a keyframe every 2 seconds to meet YouTube's stream recommendations.
 - For best results, use a single MP4 file encoded as `H.264` video and `AAC` audio, ideally at 1080p/30fps or 60fps.
 
 ### 2. Add the Stream Key to GitHub Secrets

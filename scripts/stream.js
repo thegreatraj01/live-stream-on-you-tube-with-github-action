@@ -56,20 +56,7 @@ function spawnFfmpeg(args, label) {
 }
 
 async function streamVideo() {
-  const passthroughArgs = [
-    "-re",
-    "-i",
-    videoPath,
-    "-c:v",
-    "copy",
-    "-c:a",
-    "copy",
-    "-f",
-    "flv",
-    rtmpUrl,
-  ];
-
-  const fallbackArgs = [
+  const streamArgs = [
     "-re",
     "-i",
     videoPath,
@@ -77,8 +64,18 @@ async function streamVideo() {
     "libx264",
     "-preset",
     "veryfast",
-    "-crf",
-    "23",
+    "-b:v",
+    "6800k",
+    "-minrate",
+    "6800k",
+    "-maxrate",
+    "6800k",
+    "-bufsize",
+    "13600k",
+    "-x264-params",
+    "nal-hrd=cbr",
+    "-force_key_frames",
+    "expr:gte(t,n_forced*2)",
     "-pix_fmt",
     "yuv420p",
     "-c:a",
@@ -95,18 +92,11 @@ async function streamVideo() {
   ];
 
   try {
-    await spawnFfmpeg(passthroughArgs, "passthrough");
+    await spawnFfmpeg(streamArgs, "transcoded");
   } catch (error) {
-    console.warn(
-      "Passthrough stream failed. Retrying with a YouTube-compatible H.264/AAC transcode...",
-    );
-    try {
-      await spawnFfmpeg(fallbackArgs, "transcoded");
-    } catch (fallbackError) {
-      console.error("Streaming failed even after transcode fallback.");
-      console.error(fallbackError.message);
-      process.exit(1);
-    }
+    console.error("Streaming failed.");
+    console.error(error.message);
+    process.exit(1);
   }
 }
 
