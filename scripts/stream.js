@@ -3,6 +3,8 @@ const { spawn } = require("child_process");
 const path = require("path");
 
 const YOUTUBE_STREAM_KEY = process.env.YOUTUBE_STREAM_KEY?.trim();
+
+console.log(YOUTUBE_STREAM_KEY);
 if (!YOUTUBE_STREAM_KEY) {
   console.error(
     "Error: YOUTUBE_STREAM_KEY is missing from Repository Secrets.",
