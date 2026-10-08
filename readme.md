@@ -62,6 +62,8 @@ youtube-live-streamer/
 
 Upload the videos directly to the GitHub Release from your computer. They must be named `video.mp4` and `video2.mp4`: the noon IST job streams `video.mp4`, and the noon New York job streams `video2.mp4`. The workflow downloads only the selected asset into its temporary runner workspace; it does not fetch repository LFS media.
 
+For detailed, copy-ready GitHub CLI instructions using the local `videos` folder on Windows, see [Upload or Replace Stream Videos on GitHub Releases](./videos/UPLOAD_VIDEOS_TO_RELEASE.md).
+
 ### Upload using the GitHub website
 
 1. Open the repository on GitHub and select **Releases** → **Draft a new release**.
@@ -71,19 +73,53 @@ Upload the videos directly to the GitHub Release from your computer. They must b
 
 ### Upload using GitHub CLI (Windows)
 
-Install and authenticate the [GitHub CLI](https://cli.github.com/) on your computer with `gh auth login`. For the first upload, create the release and attach both local files:
+Install and authenticate the [GitHub CLI](https://cli.github.com/) on your computer with `gh auth login`. From Command Prompt in the repository folder, for the first upload create the release and attach both files from `videos`:
 
-```powershell
-gh release create daily-stream "C:\path\to\video.mp4" "C:\path\to\video2.mp4" --title "Daily Streaming Video" --notes "Videos used by the daily stream workflow."
+```cmd
+gh release create daily-stream videos\video.mp4 videos\video2.mp4 --repo thegreatraj01/live-stream-on-you-tube-with-github-action --title "Daily Streaming Video" --notes "Videos used by the daily stream workflow."
 ```
 
-For later uploads, replace assets with matching names:
+For later uploads, replace both assets with matching names:
 
-```powershell
-gh release upload daily-stream "C:\path\to\video.mp4" "C:\path\to\video2.mp4" --clobber
+```cmd
+gh release upload daily-stream videos\video.mp4 videos\video2.mp4 --repo thegreatraj01/live-stream-on-you-tube-with-github-action --clobber
 ```
 
 `--clobber` deletes an existing asset before uploading its replacement, so keep your local copies and verify the upload succeeds.
+
+To replace only one video, give `gh release upload` only that file, for example:
+
+```cmd
+gh release upload daily-stream videos\video.mp4 --repo thegreatraj01/live-stream-on-you-tube-with-github-action --clobber
+```
+
+### Replace a video for today's stream
+
+Repeat these steps whenever you want to change the video for an upcoming stream:
+
+1. In the local `videos` folder, replace the video while keeping its filename exactly `video.mp4` (noon IST) or `video2.mp4` (noon New York).
+2. From Command Prompt opened in the repository folder, upload the replacement to the existing `daily-stream` release. Run the command for the video you replaced:
+
+   ```cmd
+   gh release upload daily-stream videos\video.mp4 --repo thegreatraj01/live-stream-on-you-tube-with-github-action --clobber
+   ```
+
+   ```cmd
+   gh release upload daily-stream videos\video2.mp4 --repo thegreatraj01/live-stream-on-you-tube-with-github-action --clobber
+   ```
+
+   If you replaced both videos, upload both in one command:
+
+   ```cmd
+   gh release upload daily-stream videos\video.mp4 videos\video2.mp4 --repo thegreatraj01/live-stream-on-you-tube-with-github-action --clobber
+   ```
+
+3. Upload the replacement before that day's scheduled stream starts. The workflow downloads the current release asset when the run begins; changing the local file alone does not update the release or start a stream.
+4. Optionally confirm the release now contains the expected assets:
+
+   ```cmd
+   gh release view daily-stream --repo thegreatraj01/live-stream-on-you-tube-with-github-action
+   ```
 
 Release assets are separate from Git commits and do not increase the repository's Git history size. GitHub allows up to 1,000 assets per release, with each file under 2 GiB; there is no total release-size or bandwidth limit. Do not commit the video files or upload them through Git LFS if you want to keep them out of the repository and LFS storage.
 

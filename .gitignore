@@ -3,3 +3,8 @@
 !.env.example
 video.mp4
 video2.mp4
+./videos
+videos
+!videos/
+videos/*
+!videos/UPLOAD_VIDEOS_TO_RELEASE.md
