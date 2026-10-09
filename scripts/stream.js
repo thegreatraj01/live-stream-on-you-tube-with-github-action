@@ -4,7 +4,7 @@ const path = require("path");
 
 const YOUTUBE_STREAM_KEY = process.env.YOUTUBE_STREAM_KEY?.trim();
 
-console.log(YOUTUBE_STREAM_KEY);
+// console.log(YOUTUBE_STREAM_KEY);
 if (!YOUTUBE_STREAM_KEY) {
   console.error(
     "Error: YOUTUBE_STREAM_KEY is missing from Repository Secrets.",
@@ -66,6 +66,10 @@ async function streamVideo() {
     "libx264",
     "-preset",
     "veryfast",
+    "-level:v",
+    "4.2",
+    "-bf",
+    "0",                          // No B-frames: eliminates frame-buffering startup delay
     "-b:v",
     "6800k",
     "-minrate",
@@ -75,11 +79,13 @@ async function streamVideo() {
     "-bufsize",
     "13600k",
     "-x264-params",
-    "nal-hrd=cbr",
+    "nal-hrd=cbr:bframes=0",      // Also disable B-frames inside x264 params
     "-force_key_frames",
     "expr:gte(t,n_forced*2)",
     "-pix_fmt",
     "yuv420p",
+    "-flush_packets",
+    "1",                          // Flush packets immediately to YouTube
     "-c:a",
     "aac",
     "-ar",
