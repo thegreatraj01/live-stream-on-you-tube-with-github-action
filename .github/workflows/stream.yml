@@ -9,7 +9,7 @@ on:
     inputs:
       video_file:
         description: Video file to stream
-        required: true
+        required: false
         type: choice
         options:
           - video.mp4
@@ -23,10 +23,18 @@ jobs:
   stream:
     runs-on: ubuntu-24.04
     env:
-      VIDEO_FILE: ${{ github.event.action == 'noon-new-york' && 'video2.mp4' || github.event.inputs.video_file || 'video.mp4' }}
+      VIDEO_FILE: ${{ github.event_name == 'workflow_dispatch' && (inputs.video_file || github.event.inputs.video_file || 'video.mp4') || github.event.action == 'noon-new-york' && 'video2.mp4' || 'video.mp4' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
+
+      - name: Debug trigger details
+        run: |
+          echo "Trigger event: $GITHUB_EVENT_NAME"
+          echo "inputs.video_file: ${{ inputs.video_file }}"
+          echo "github.event.inputs.video_file: ${{ github.event.inputs.video_file }}"
+          echo "github.event.action: ${{ github.event.action }}"
+          echo "Resolved VIDEO_FILE: $VIDEO_FILE"
 
       - name: Download video from GitHub Release
         env:
@@ -47,12 +55,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
-
-      - name: Show trigger details
-        run: |
-          echo "Trigger event: $GITHUB_EVENT_NAME"
-          echo "Runner time (UTC): $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          echo "Video file: $VIDEO_FILE"
 
       - name: Start Live Stream
         env:
