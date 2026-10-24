@@ -19,6 +19,14 @@ if (!["video.mp4", "video2.mp4"].includes(videoFile)) {
   process.exit(1);
 }
 
+const loopCount = Number(process.env.LOOP_COUNT?.trim() || "1");
+if (!Number.isInteger(loopCount) || loopCount < 1 || loopCount > 6) {
+  console.error(
+    `Error: Unsupported loop count "${process.env.LOOP_COUNT}". Use a number from 1 to 6.`,
+  );
+  process.exit(1);
+}
+
 const videoPath = path.join(__dirname, "..", "release-assets", videoFile);
 if (!fs.existsSync(videoPath)) {
   console.error(
@@ -58,6 +66,8 @@ function spawnFfmpeg(args, label) {
 
 async function streamVideo() {
   const streamArgs = [
+    "-stream_loop",
+    String(loopCount - 1),
     "-re",
     "-i",
     videoPath,

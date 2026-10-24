@@ -130,16 +130,18 @@ Confirm that the uploaded asset names are exactly `video.mp4` and `video2.mp4` (
 
 ## 5. Run a stream with the updated video (optional)
 
-Uploading or replacing an asset does not start a workflow run. To test a video manually, start the workflow from the repository's default branch:
+Uploading or replacing an asset does not start a workflow run. In GitHub, open **Actions** > **Scheduled YouTube Live Stream** > **Run workflow**, then choose the video and how many total times it should play (1 to 6). Scheduled streams always play the video once.
+
+To start a run with GitHub CLI, pass `loop_count` as a number from `1` to `6`. For example, to play the first video three times:
 
 ```cmd
-gh workflow run stream.yml --repo thegreatraj01/live-stream-on-you-tube-with-github-action -f video_file=video.mp4
+gh workflow run stream.yml --repo thegreatraj01/live-stream-on-you-tube-with-github-action -f video_file=video.mp4 -f loop_count=3
 ```
 
-To test the second video instead:
+Choose a different total number of plays by changing `loop_count`. To play the second video once:
 
 ```cmd
-gh workflow run stream.yml --repo thegreatraj01/live-stream-on-you-tube-with-github-action -f video_file=video2.mp4
+gh workflow run stream.yml --repo thegreatraj01/live-stream-on-you-tube-with-github-action -f video_file=video2.mp4 -f loop_count=1
 ```
 
 Find the run and check its progress:
