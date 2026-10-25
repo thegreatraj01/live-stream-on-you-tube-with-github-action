@@ -102,15 +102,15 @@ jobs:
           ls -lh release-assets
           test -f "release-assets/$VIDEO_FILE"
 
-      - name: Validate downloaded video
-        run: |
-          set -euo pipefail
-          ffprobe -v error -show_streams -show_format "release-assets/$VIDEO_FILE"
-
       - name: Install FFmpeg
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
+
+      - name: Validate downloaded video
+        run: |
+          set -euo pipefail
+          ffprobe -v error -show_streams -show_format "release-assets/$VIDEO_FILE"
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
