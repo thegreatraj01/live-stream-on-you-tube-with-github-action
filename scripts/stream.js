@@ -28,7 +28,6 @@ if (!Number.isInteger(loopCount) || loopCount < 1 || loopCount > 6) {
 }
 
 const videoPath = path.join(__dirname, "..", "release-assets", videoFile);
-
 if (!fs.existsSync(videoPath)) {
   console.error(
     `Error: Release video asset not found at ${videoPath}. Add ${videoFile} to the daily-stream GitHub Release.`,
@@ -42,7 +41,6 @@ try {
   });
 } catch (error) {
   console.error("Downloaded file is not a valid video for streaming.");
-  console.error(error.message);
   process.exit(1);
 }
 

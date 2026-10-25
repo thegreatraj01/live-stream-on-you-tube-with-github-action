@@ -41,12 +41,15 @@ jobs:
 
       - name: Resolve stream parameters
         shell: bash
+        env:
+          INPUT_VIDEO_FILE: ${{ github.event.inputs.video_file || inputs.video_file || 'video.mp4' }}
+          INPUT_LOOP_COUNT: ${{ github.event.inputs.loop_count || inputs.loop_count || '1' }}
         run: |
           set -euo pipefail
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VIDEO_FILE="${{ inputs.video_file || 'video.mp4' }}"
-            LOOP_COUNT="${{ inputs.loop_count || '1' }}"
+            VIDEO_FILE="${INPUT_VIDEO_FILE}"
+            LOOP_COUNT="${INPUT_LOOP_COUNT}"
           elif [ "${{ github.event.action }}" = "noon-new-york" ]; then
             VIDEO_FILE="video2.mp4"
             LOOP_COUNT="1"
@@ -55,22 +58,35 @@ jobs:
             LOOP_COUNT="1"
           fi
 
+          if [ -z "$VIDEO_FILE" ]; then
+            VIDEO_FILE="video.mp4"
+          fi
+
           case "$VIDEO_FILE" in
             video.mp4|video2.mp4)
               ;;
             *)
-              echo "Unsupported VIDEO_FILE: $VIDEO_FILE"
+              echo "Unsupported video file: $VIDEO_FILE"
               exit 1
               ;;
           esac
 
           if ! [[ "$LOOP_COUNT" =~ ^[1-6]$ ]]; then
-            echo "Unsupported LOOP_COUNT: $LOOP_COUNT"
+            echo "Unsupported loop count: $LOOP_COUNT"
             exit 1
           fi
 
+          echo "Resolved VIDEO_FILE=$VIDEO_FILE"
+          echo "Resolved LOOP_COUNT=$LOOP_COUNT"
           echo "VIDEO_FILE=$VIDEO_FILE" >> "$GITHUB_ENV"
           echo "LOOP_COUNT=$LOOP_COUNT" >> "$GITHUB_ENV"
+
+      - name: Debug release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view daily-stream --repo "$GITHUB_REPOSITORY" --json assets
 
       - name: Download video from GitHub Release
         env:
@@ -78,16 +94,17 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-assets
+          echo "Downloading asset: $VIDEO_FILE"
           gh release download daily-stream \
             --repo "$GITHUB_REPOSITORY" \
             --pattern "$VIDEO_FILE" \
             --dir release-assets
+          ls -lh release-assets
+          test -f "release-assets/$VIDEO_FILE"
 
       - name: Validate downloaded video
         run: |
           set -euo pipefail
-          ls -lh release-assets
-          test -f "release-assets/$VIDEO_FILE"
           ffprobe -v error -show_streams -show_format "release-assets/$VIDEO_FILE"
 
       - name: Install FFmpeg
