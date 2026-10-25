@@ -52,10 +52,10 @@ jobs:
             LOOP_COUNT="${INPUT_LOOP_COUNT}"
           elif [ "${{ github.event.action }}" = "noon-new-york" ]; then
             VIDEO_FILE="video2.mp4"
-            LOOP_COUNT="1"
+            LOOP_COUNT="4"
           else
             VIDEO_FILE="video.mp4"
-            LOOP_COUNT="1"
+            LOOP_COUNT="4"
           fi
 
           if [ -z "$VIDEO_FILE" ]; then
