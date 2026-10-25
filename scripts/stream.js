@@ -1,5 +1,5 @@
 const fs = require("fs");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 const path = require("path");
 
 const YOUTUBE_STREAM_KEY = process.env.YOUTUBE_STREAM_KEY?.trim();
@@ -28,10 +28,21 @@ if (!Number.isInteger(loopCount) || loopCount < 1 || loopCount > 6) {
 }
 
 const videoPath = path.join(__dirname, "..", "release-assets", videoFile);
+
 if (!fs.existsSync(videoPath)) {
   console.error(
     `Error: Release video asset not found at ${videoPath}. Add ${videoFile} to the daily-stream GitHub Release.`,
   );
+  process.exit(1);
+}
+
+try {
+  execSync(`ffprobe -v error -show_streams -show_format "${videoPath}"`, {
+    stdio: "inherit",
+  });
+} catch (error) {
+  console.error("Downloaded file is not a valid video for streaming.");
+  console.error(error.message);
   process.exit(1);
 }
 

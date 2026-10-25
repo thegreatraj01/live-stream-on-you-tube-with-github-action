@@ -34,33 +34,61 @@ permissions:
 jobs:
   stream:
     runs-on: ubuntu-24.04
-    env:
-      VIDEO_FILE: ${{ github.event_name == 'workflow_dispatch' && (inputs.video_file || github.event.inputs.video_file || 'video.mp4') || github.event.action == 'noon-new-york' && 'video2.mp4' || 'video.mp4' }}
-      LOOP_COUNT: ${{ github.event_name == 'workflow_dispatch' && (inputs.loop_count || github.event.inputs.loop_count || '1') || '1' }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
 
-      - name: Debug trigger details
+      - name: Resolve stream parameters
+        shell: bash
         run: |
-          echo "Trigger event: $GITHUB_EVENT_NAME"
-          echo "inputs.video_file: ${{ inputs.video_file }}"
-          echo "github.event.inputs.video_file: ${{ github.event.inputs.video_file }}"
-          echo "inputs.loop_count: ${{ inputs.loop_count }}"
-          echo "github.event.inputs.loop_count: ${{ github.event.inputs.loop_count }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "Resolved VIDEO_FILE: $VIDEO_FILE"
-          echo "Resolved LOOP_COUNT: $LOOP_COUNT"
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VIDEO_FILE="${{ inputs.video_file || 'video.mp4' }}"
+            LOOP_COUNT="${{ inputs.loop_count || '1' }}"
+          elif [ "${{ github.event.action }}" = "noon-new-york" ]; then
+            VIDEO_FILE="video2.mp4"
+            LOOP_COUNT="1"
+          else
+            VIDEO_FILE="video.mp4"
+            LOOP_COUNT="1"
+          fi
+
+          case "$VIDEO_FILE" in
+            video.mp4|video2.mp4)
+              ;;
+            *)
+              echo "Unsupported VIDEO_FILE: $VIDEO_FILE"
+              exit 1
+              ;;
+          esac
+
+          if ! [[ "$LOOP_COUNT" =~ ^[1-6]$ ]]; then
+            echo "Unsupported LOOP_COUNT: $LOOP_COUNT"
+            exit 1
+          fi
+
+          echo "VIDEO_FILE=$VIDEO_FILE" >> "$GITHUB_ENV"
+          echo "LOOP_COUNT=$LOOP_COUNT" >> "$GITHUB_ENV"
 
       - name: Download video from GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           mkdir -p release-assets
           gh release download daily-stream \
             --repo "$GITHUB_REPOSITORY" \
             --pattern "$VIDEO_FILE" \
             --dir release-assets
+
+      - name: Validate downloaded video
+        run: |
+          set -euo pipefail
+          ls -lh release-assets
+          test -f "release-assets/$VIDEO_FILE"
+          ffprobe -v error -show_streams -show_format "release-assets/$VIDEO_FILE"
 
       - name: Install FFmpeg
         run: |
@@ -75,4 +103,6 @@ jobs:
       - name: Start Live Stream
         env:
           YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
+          VIDEO_FILE: ${{ env.VIDEO_FILE }}
+          LOOP_COUNT: ${{ env.LOOP_COUNT }}
         run: node scripts/stream.js
