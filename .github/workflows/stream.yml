@@ -52,10 +52,10 @@ jobs:
             LOOP_COUNT="${INPUT_LOOP_COUNT}"
           elif [ "${{ github.event.action }}" = "noon-new-york" ]; then
             VIDEO_FILE="video2.mp4"
-            LOOP_COUNT="4"
+            LOOP_COUNT="1"
           else
             VIDEO_FILE="video.mp4"
-            LOOP_COUNT="4"
+            LOOP_COUNT="1"
           fi
 
           if [ -z "$VIDEO_FILE" ]; then
@@ -76,17 +76,20 @@ jobs:
             exit 1
           fi
 
+          echo "GITHUB_EVENT_NAME=${{ github.event_name }}"
+          echo "GITHUB_EVENT_ACTION=${{ github.event.action }}"
           echo "Resolved VIDEO_FILE=$VIDEO_FILE"
           echo "Resolved LOOP_COUNT=$LOOP_COUNT"
+
           echo "VIDEO_FILE=$VIDEO_FILE" >> "$GITHUB_ENV"
           echo "LOOP_COUNT=$LOOP_COUNT" >> "$GITHUB_ENV"
 
-      - name: Debug release assets
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Debug trigger details
         run: |
-          set -euo pipefail
-          gh release view daily-stream --repo "$GITHUB_REPOSITORY" --json assets
+          echo "Trigger event: $GITHUB_EVENT_NAME"
+          echo "Event action: ${{ github.event.action }}"
+          echo "Resolved VIDEO_FILE: $VIDEO_FILE"
+          echo "Resolved LOOP_COUNT: $LOOP_COUNT"
 
       - name: Download video from GitHub Release
         env:

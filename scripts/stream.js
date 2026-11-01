@@ -28,6 +28,7 @@ if (!Number.isInteger(loopCount) || loopCount < 1 || loopCount > 6) {
 }
 
 const videoPath = path.join(__dirname, "..", "release-assets", videoFile);
+
 if (!fs.existsSync(videoPath)) {
   console.error(
     `Error: Release video asset not found at ${videoPath}. Add ${videoFile} to the daily-stream GitHub Release.`,
