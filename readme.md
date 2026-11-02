@@ -140,6 +140,7 @@ GitHub Actions scheduled workflows may start late, so these streams are triggere
 - Each cron-job.org job sends an HTTPS `POST` request to GitHub at noon in its configured timezone.
 - Choose the timezone itself instead of converting noon to a fixed UTC time.
 - The `America/New_York` timezone automatically follows daylight saving time.
+- The noon IST job plays `video.mp4` four times; the noon New York job plays `video2.mp4` once.
 
 ### 1. Create a GitHub token for cron-job.org
 

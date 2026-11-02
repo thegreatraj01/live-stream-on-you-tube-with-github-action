@@ -130,7 +130,7 @@ Confirm that the uploaded asset names are exactly `video.mp4` and `video2.mp4` (
 
 ## 5. Run a stream with the updated video (optional)
 
-Uploading or replacing an asset does not start a workflow run. In GitHub, open **Actions** > **Scheduled YouTube Live Stream** > **Run workflow**, then choose the video and how many total times it should play (1 to 6). Scheduled streams always play the video once.
+Uploading or replacing an asset does not start a workflow run. In GitHub, open **Actions** > **Scheduled YouTube Live Stream** > **Run workflow**, then choose the video and how many total times it should play (1 to 6). Manual runs default to one play. The scheduled noon IST stream plays `video.mp4` four times, while the scheduled noon New York stream plays `video2.mp4` once.
 
 To start a run with GitHub CLI, pass `loop_count` as a number from `1` to `6`. For example, to play the first video three times:
 
