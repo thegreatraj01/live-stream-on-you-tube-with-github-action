@@ -44,7 +44,7 @@ youtube-live-streamer/
 ### Large video files / compatibility tips
 
 - Videos are transcoded before streaming, so FFmpeg does not depend on the source video's codec or keyframe interval.
-- The script transcodes videos to `H.264` + `AAC`, targeting a constant 6,800 Kbps video bitrate with a keyframe every 2 seconds to meet YouTube's stream recommendations.
+- The script transcodes videos to constant 30 fps `H.264` + `AAC`, targeting a constant 6,800 Kbps video bitrate with a keyframe every 2 seconds to meet YouTube's stream recommendations.
 - For best results, use a single MP4 file encoded as `H.264` video and `AAC` audio, ideally at 1080p/30fps or 60fps.
 
 ### 2. Add the Stream Key to GitHub Secrets
@@ -145,13 +145,13 @@ Commit that removal along with the workflow changes. Removing files in a new com
 
 ## ⏰ Step 3: Schedule Daily Streams
 
-The noon streams are triggered by two cron-job.org jobs using GitHub's `repository_dispatch` API. A separate GitHub Actions schedule starts the `video.mp4` stream daily at 9 PM IST (15:30 UTC). GitHub may start scheduled workflows late.
+The noon streams are triggered by two cron-job.org jobs using GitHub's `repository_dispatch` API. A separate GitHub Actions schedule starts the `video.mp4` stream daily at 5:30 PM IST (12:00 UTC). GitHub may start scheduled workflows late.
 
 - Each cron-job.org job sends an HTTPS `POST` request to GitHub at noon in its configured timezone.
 - Choose the timezone itself instead of converting noon to a fixed UTC time.
 - The `America/New_York` timezone automatically follows daylight saving time.
 - The noon IST job plays `video.mp4` four times; the noon New York job plays `video2.mp4` once.
-- The 9 PM IST GitHub Actions schedule also plays `video.mp4` four times.
+- The 5:30 PM IST GitHub Actions schedule also plays `video.mp4` four times.
 
 ### 1. Create a GitHub token for cron-job.org
 

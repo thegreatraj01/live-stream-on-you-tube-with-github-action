@@ -81,6 +81,8 @@ async function streamVideo() {
     "-re",
     "-i",
     videoPath,
+    "-vf",
+    "fps=30",
     "-c:v",
     "libx264",
     "-preset",

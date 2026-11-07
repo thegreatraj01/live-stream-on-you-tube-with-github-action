@@ -2,7 +2,7 @@ name: Scheduled YouTube Live Stream
 
 on:
   schedule:
-    - cron: "30 15 * * *"
+    - cron: '0 12 * * *'
   repository_dispatch:
     types:
       - noon-ist
