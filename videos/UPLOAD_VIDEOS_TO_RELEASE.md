@@ -59,7 +59,17 @@ Check that the repository shown is the intended one before proceeding.
 
 ## 3. Upload the files
 
-Run the command for the case that applies to you from the repository folder.
+Install FFmpeg (for its `ffprobe` utility), authenticate the GitHub CLI, then run the chosen command from the repository folder:
+
+```cmd
+npm run upload-1
+npm run upload-2
+npm run upload-both
+```
+
+Choose the command for the video or videos you replaced. Before uploading, the script uses `ffprobe` to check that each file exists, is smaller than 2 GiB, uses a YouTube-listed container, and has supported video/audio codecs. This is a quick metadata-only check: it does not decode or re-encode the files, and supported files are uploaded unchanged. YouTube does not publish an exhaustive codec/container matrix, so a successful check cannot guarantee platform acceptance. If either video fails validation, nothing is uploaded. The script creates the published `daily-stream` release if it is missing and replaces selected assets on an existing release. `upload-both` checks both videos before uploading either one, then submits them together.
+
+Alternatively, run the GitHub CLI commands below manually.
 
 ### First upload: the `daily-stream` release does not exist yet
 

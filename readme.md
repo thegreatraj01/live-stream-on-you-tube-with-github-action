@@ -62,6 +62,16 @@ youtube-live-streamer/
 
 Upload the videos directly to the GitHub Release from your computer. They must be named `video.mp4` and `video2.mp4`: the noon IST and 9 PM IST jobs stream `video.mp4`, and the noon New York job streams `video2.mp4`. The workflow downloads only the selected asset into its temporary runner workspace; it does not fetch repository LFS media.
 
+To upload a video from the `videos` folder, install and authenticate GitHub CLI with `gh auth login`, then run one of these commands from the repository folder:
+
+```cmd
+npm run upload-1
+npm run upload-2
+npm run upload-both
+```
+
+The upload commands check that selected files exist, are smaller than 2 GiB, and use a YouTube-listed container with supported video/audio codecs. The metadata-only check uses `ffprobe` (included with FFmpeg); it does not decode or re-encode the video. Supported files are uploaded unchanged. YouTube does not publish an exhaustive codec/container matrix, so a successful check cannot guarantee platform acceptance. The commands create the published `daily-stream` release if it does not exist, or replace the selected assets if it does. `upload-both` checks both files before uploading either one, then submits them together.
+
 For detailed, copy-ready GitHub CLI instructions using the local `videos` folder on Windows, see [Upload or Replace Stream Videos on GitHub Releases](./videos/UPLOAD_VIDEOS_TO_RELEASE.md).
 
 ### Upload using the GitHub website

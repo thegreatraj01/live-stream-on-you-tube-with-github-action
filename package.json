@@ -1,0 +1,9 @@
+{
+  "name": "youtube-live-stream-release-uploader",
+  "private": true,
+  "scripts": {
+    "upload-1": "node scripts/upload-release.js video.mp4",
+    "upload-2": "node scripts/upload-release.js video2.mp4",
+    "upload-both": "node scripts/upload-release.js video.mp4 video2.mp4"
+  }
+}
