@@ -60,7 +60,7 @@ youtube-live-streamer/
 
 ## 🎬 Step 2: Add or Change the Stream Videos
 
-Upload the videos directly to the GitHub Release from your computer. They must be named `video.mp4` and `video2.mp4`: the noon IST job streams `video.mp4`, and the noon New York job streams `video2.mp4`. The workflow downloads only the selected asset into its temporary runner workspace; it does not fetch repository LFS media.
+Upload the videos directly to the GitHub Release from your computer. They must be named `video.mp4` and `video2.mp4`: the noon IST and 9 PM IST jobs stream `video.mp4`, and the noon New York job streams `video2.mp4`. The workflow downloads only the selected asset into its temporary runner workspace; it does not fetch repository LFS media.
 
 For detailed, copy-ready GitHub CLI instructions using the local `videos` folder on Windows, see [Upload or Replace Stream Videos on GitHub Releases](./videos/UPLOAD_VIDEOS_TO_RELEASE.md).
 
@@ -133,14 +133,15 @@ Commit that removal along with the workflow changes. Removing files in a new com
 
 ---
 
-## ⏰ Step 3: Schedule Both Daily Streams with cron-job.org
+## ⏰ Step 3: Schedule Daily Streams
 
-GitHub Actions scheduled workflows may start late, so these streams are triggered by two cron-job.org jobs using GitHub's `repository_dispatch` API:
+The noon streams are triggered by two cron-job.org jobs using GitHub's `repository_dispatch` API. A separate GitHub Actions schedule starts the `video.mp4` stream daily at 9 PM IST (15:30 UTC). GitHub may start scheduled workflows late.
 
 - Each cron-job.org job sends an HTTPS `POST` request to GitHub at noon in its configured timezone.
 - Choose the timezone itself instead of converting noon to a fixed UTC time.
 - The `America/New_York` timezone automatically follows daylight saving time.
 - The noon IST job plays `video.mp4` four times; the noon New York job plays `video2.mp4` once.
+- The 9 PM IST GitHub Actions schedule also plays `video.mp4` four times.
 
 ### 1. Create a GitHub token for cron-job.org
 
